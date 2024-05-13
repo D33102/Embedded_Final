@@ -101,6 +101,7 @@ int main(void)
 	TIM2->CCR1 = 50;
 	int adcval = 0;
 	char buf[256];
+	uint8_t data = '1';
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,10 +115,12 @@ int main(void)
 			// Write integer to buffer
 			sprintf(buf, "%d\r\n", adcval);
 			// Transmitted with UART
-			HAL_UART_Transmit(&huart2, buf, strlen(buf), 1000);
 		}
 		if (adcval < 50) TIM2->CCR1 = 100;
 		else TIM2-> CCR1 = 0;
+		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6) == GPIO_PIN_SET) {
+			HAL_UART_Transmit(&huart2, &data, 1, 100);
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -327,6 +330,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA6 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC4 PC5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
