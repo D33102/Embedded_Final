@@ -64,57 +64,6 @@ char temp[256], humid[256];
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 // Read data from DHT22 sensor
-uint8_t DHT22_Read(uint8_t data[5]) {
-	// Send start signal
-	HAL_GPIO_WritePin(DHT22_GPIO_PORT, DHT22_GPIO_PIN, GPIO_PIN_RESET);
-	HAL_Delay(1); // Hold the line low for at least 1ms
-	HAL_GPIO_WritePin(DHT22_GPIO_PORT, DHT22_GPIO_PIN, GPIO_PIN_SET);
-
-	// Wait for response from sensor
-	HAL_Delay(80); // Delay for about 80us
-	if (HAL_GPIO_ReadPin(DHT22_GPIO_PORT, DHT22_GPIO_PIN) == GPIO_PIN_RESET) {
-		// Sensor has responded, start reading data
-		while (HAL_GPIO_ReadPin(DHT22_GPIO_PORT, DHT22_GPIO_PIN)
-				== GPIO_PIN_RESET)
-			; // Wait for sensor to pull the line high
-		while (HAL_GPIO_ReadPin(DHT22_GPIO_PORT, DHT22_GPIO_PIN) == GPIO_PIN_SET)
-			; // Wait for sensor to pull the line low (start of data transmission)
-
-		// Read 40 bits of data
-		for (int i = 0; i < 40; i++) {
-			while (HAL_GPIO_ReadPin(DHT22_GPIO_PORT, DHT22_GPIO_PIN)
-					== GPIO_PIN_RESET)
-				; // Wait for sensor to pull the line high (start of pulse)
-			uint32_t start_time = HAL_GetTick(); // Record start time of pulse
-			while (HAL_GPIO_ReadPin(DHT22_GPIO_PORT, DHT22_GPIO_PIN)
-					== GPIO_PIN_SET)
-				; // Wait for sensor to pull the line low (end of pulse)
-			uint32_t pulse_duration = HAL_GetTick() - start_time; // Calculate pulse duration
-
-			// Data bit received
-			data[i / 8] <<= 1; // Shift previous bits to left
-			if (pulse_duration > 40) {
-				data[i / 8] |= 1; // If pulse duration is greater than 40us, consider it as bit 1
-			}
-		}
-
-		// Checksum verification
-		if (data[4] == (data[0] + data[1] + data[2] + data[3]) & 0xFF) {
-			return 1; // Data read successful
-		}
-	}
-	return 0; // Data read failed
-}
-
-// Convert raw data to humidity/temperature value
-float DHT22_Convert(uint8_t data[5]) {
-	uint16_t value = (data[0] << 8) | data[1];
-	if (value & 0x8000) {
-		return (float) ((value & 0x7FFF) / 10.0) * -1.0; // Negative temperature
-	} else {
-		return (float) (value / 10.0); // Positive temperature
-	}
-}
 
 /* USER CODE END 0 */
 
@@ -153,7 +102,7 @@ int main(void) {
 	TIM2->CCR1 = 50;
 	int adcval = 0;
 	char buf[256],temp[256],humid[256];
-	uint8_t val = '1';
+	uint8_t val1 = '1',val2 = '2',val3 = '3',val4 = '4';
 	uint8_t data[5];
 	float humidity, temperature;
 	/* USER CODE END 2 */
@@ -163,29 +112,20 @@ int main(void) {
 	while (1) {
 		HAL_ADC_Start(&hadc1);
 		// Wait for 1000ms or when the conversion is finished.
-		if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK) {
-			// Read the ADC value
+		if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK)
 			adcval = HAL_ADC_GetValue(&hadc1);
-			// Write integer to buffer
-			sprintf(buf, "%d\r\n", adcval);
-			// Transmitted with UART
-		}
-		if (adcval > 30)
+		if (adcval > 350)
 			TIM2->CCR1 = 0;
 		else
 			TIM2->CCR1 = 100;
-		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6) == GPIO_PIN_SET) {
-			HAL_UART_Transmit(&huart2, &val, 1, 100);
-		}
-		if (DHT22_Read(data)) {
-			humidity = DHT22_Convert(data);
-			temperature = DHT22_Convert(data + 2);
-
-			sprintf(humid,"Humidity: %d%%\n", humidity);
-			sprintf(temp,"Temperature: %d°C\n", temperature);
-			HAL_UART_Transmit(&huart2, &humid, strlen(humid), 100);
-			HAL_UART_Transmit(&huart2, &temp, strlen(temp), 100);
-		}
+		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6) == GPIO_PIN_SET)
+			HAL_UART_Transmit(&huart2, &val1, 1, 100);
+		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7) == GPIO_PIN_SET)
+			HAL_UART_Transmit(&huart2, &val2, 1, 100);
+		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_8) == GPIO_PIN_SET)
+			HAL_UART_Transmit(&huart2, &val3, 1, 100);
+		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9) == GPIO_PIN_SET)
+			HAL_UART_Transmit(&huart2, &val4, 1, 100);
 
 		/* USER CODE END WHILE */
 
