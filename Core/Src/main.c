@@ -101,20 +101,20 @@ int main(void) {
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	TIM2->CCR1 = 50;
 	int adcval = 0;
-	char buf[256],temp[256],humid[256];
+	char buf[256];
 	uint8_t val1 = '1',val2 = '2',val3 = '3',val4 = '4';
-	uint8_t data[5];
-	float humidity, temperature;
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		HAL_ADC_Start(&hadc1);
-		// Wait for 1000ms or when the conversion is finished.
-		if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK)
+		if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK) {
 			adcval = HAL_ADC_GetValue(&hadc1);
-		if (adcval > 350)
+//			sprintf(buf,"%d\r\n",adcval);
+//			HAL_UART_Transmit(&huart2, buf, strlen(buf), 100);
+		}
+		if (adcval > 700)
 			TIM2->CCR1 = 0;
 		else
 			TIM2->CCR1 = 100;
